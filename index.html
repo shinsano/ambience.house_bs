@@ -144,7 +144,7 @@
             conversation.appendChild(gptMessage);
 
         } catch (error) {
-            console.error("Fetch error:", error);
+            console.error("Fetch error:", error.message);
             loadingElement.style.display = "none";
             responseElement.innerText = "Error: Unable to get a response.";
         }
