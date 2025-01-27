@@ -1,0 +1,106 @@
+/* Bootstrap Compatible Styles with Original Design Integration */
+body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow-x: hidden;
+    font-family: 'Dongle', sans-serif;
+    background-color: #f5f5f5;
+}
+
+.navbar {
+    background-color: #ffffff;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.navbar-brand img {
+    max-height: 50px;
+}
+
+.landing-logo {
+    width: 120px;
+    height: auto;
+}
+
+.mindmap-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 600px;
+    background-color: #e3f2fd;
+    border-radius: 10px;
+    padding: 20px;
+}
+
+.mindmap-svg {
+    width: 100%;
+    height: auto;
+    max-height: 800px;
+}
+
+.section-header {
+    font-size: 48px;
+    font-weight: 700;
+    color: #1a0557;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.faq-section {
+    margin-top: 30px;
+}
+
+.accordion-button {
+    font-size: 24px;
+    font-weight: bold;
+    background-color: #e3f2fd;
+}
+
+.accordion-body {
+    font-size: 20px;
+}
+
+.footer {
+    background-color: #f8f9fa;
+    padding: 10px 0;
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.social-icons a {
+    font-size: 24px;
+    text-decoration: none;
+    color: #333;
+}
+
+@media (max-width: 768px) {
+    .landing-logo {
+        width: 90px;
+    }
+    .mindmap-container {
+        min-height: 500px;
+    }
+    .section-header {
+        font-size: 36px;
+    }
+    .accordion-button {
+        font-size: 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    .landing-logo {
+        width: 80px;
+    }
+    .mindmap-container {
+        min-height: 450px;
+    }
+    .section-header {
+        font-size: 28px;
+    }
+    .accordion-button {
+        font-size: 18px;
+    }
+}
