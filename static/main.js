@@ -528,6 +528,13 @@ async function askGPT() {
     let query = document.getElementById('query').value;
     let responseElement = document.getElementById('response');
     let loadingElement = document.getElementById('loading');
+    let conversation = document.getElementById('conversation');
+
+    // Append user message
+    let userMessage = document.createElement('div');
+    userMessage.className = 'message user';
+    userMessage.innerHTML = `<div class="content">${query}</div>`;
+    conversation.appendChild(userMessage);
 
     responseElement.innerText = "";
     loadingElement.style.display = "block";
@@ -540,8 +547,8 @@ async function askGPT() {
                 "Accept": "application/json",
             },
             body: JSON.stringify({ question: query }),
-            mode: "cors", // ✅ Explicitly enabling CORS
-            credentials: "include" // ✅ Ensures cookies & headers are handled correctly
+            mode: "cors",
+            credentials: "include"
         });
 
         if (!response.ok) {
@@ -550,12 +557,34 @@ async function askGPT() {
 
         let data = await response.json();
         loadingElement.style.display = "none";
-        responseElement.innerText = data.answer;
+
+        // Append GPT response with typing effect
+        let gptMessage = document.createElement('div');
+        gptMessage.className = 'message ambience';
+        let contentDiv = document.createElement('div');
+        contentDiv.className = 'content';
+        gptMessage.appendChild(contentDiv);
+        conversation.appendChild(gptMessage);
+
+        typeResponse(contentDiv, data.answer);
+
     } catch (error) {
-        console.error("Fetch error:", error);
+        console.error("Fetch error:", error.message);
         loadingElement.style.display = "none";
         responseElement.innerText = "Error: Unable to get a response.";
     }
+}
+
+function typeResponse(element, text, speed = 50) {
+    let index = 0;
+    function type() {
+        if (index < text.length) {
+            element.innerHTML += text.charAt(index);
+            index++;
+            setTimeout(type, speed);
+        }
+    }
+    type();
 }
 
 
