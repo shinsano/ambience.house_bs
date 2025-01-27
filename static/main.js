@@ -310,8 +310,8 @@ function update() {
         .append("text")
         .attr("class", "link-label")
         .attr("text-anchor", "middle")
-        .style("font-size", "24px")
-        .style("font-family", "dongle")
+        .style("font-size", "14px")
+        .style("font-family","source-sans-pro")
         .style("color", "#333366")
         .text(d => d.label)
         .merge(linkLabels);
@@ -454,8 +454,8 @@ function dragended(event, d) {
 }
 
 function applyTextStyles(selection) {
-    selection.style("font-size", "24px")
-        .style("font-family", "dongle")
+    selection.style("font-size", "14px")
+        .style("font-family", "source-sans-pro")
         .style("color", "#333366");
 }
 
