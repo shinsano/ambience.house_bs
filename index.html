@@ -72,21 +72,20 @@
         </div>
     </section>
 
-    <!-- FAQ Section -->
-    <section id="faq" class="container py-5">
-        <h2 class="text-center text-secondary">Frequently Asked Questions</h2>
-        <div class="accordion" id="faqAccordion">
-            <div class="accordion-item">
-                <h2 class="accordion-header">
-                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
-                        How much does it cost?
-                    </button>
-                </h2>
-                <div id="faq1" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
-                    <div class="accordion-body">
-                        We offer a Home Energy Score for $500 flat fee, with a $200 rebate available from BayREN.
-                    </div>
+    <!-- Chat UI Section -->
+    <section id="chatUI" class="container my-5" style="display: none;">
+        <h2 class="text-center mb-4">Chat with Ambience GPT</h2>
+        <div class="card">
+            <div class="card-body">
+                <div id="conversation" class="conversation mb-3" style="height: 300px; overflow-y: auto;">
+                    <!-- Chat messages will be appended here -->
                 </div>
+                <div class="input-group">
+                    <input type="text" id="query" class="form-control" placeholder="Type your question here..." />
+                    <button class="btn btn-primary" onclick="askGPT()">Send</button>
+                </div>
+                <div id="loading" class="mt-2" style="display: none;">Loading...</div>
+                <div id="response" class="mt-2"></div>
             </div>
         </div>
     </section>
@@ -102,5 +101,54 @@
             <a href="mailto:info@ambience.house" class="mx-2 text-dark"><i class="fas fa-envelope"></i></a>
         </div>
     </footer>
+
+    <script>
+    async function askGPT() {
+        let query = document.getElementById('query').value;
+        let responseElement = document.getElementById('response');
+        let loadingElement = document.getElementById('loading');
+        let conversation = document.getElementById('conversation');
+
+        // Append user message
+        let userMessage = document.createElement('div');
+        userMessage.className = 'message user';
+        userMessage.innerHTML = `<div class="content">${query}</div>`;
+        conversation.appendChild(userMessage);
+
+        responseElement.innerText = "";
+        loadingElement.style.display = "block";
+
+        try {
+            let response = await fetch('https://ambience-gpt.onrender.com/ask', {
+                method: 'POST',
+                headers: {
+                    "Content-Type": "application/json",
+                    "Accept": "application/json",
+                },
+                body: JSON.stringify({ question: query }),
+                mode: "cors",
+                credentials: "include"
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+
+            let data = await response.json();
+            loadingElement.style.display = "none";
+
+            // Append GPT response
+            let gptMessage = document.createElement('div');
+            gptMessage.className = 'message ambience';
+            gptMessage.innerHTML = `<div class="content">${data.answer}</div>`;
+            conversation.appendChild(gptMessage);
+
+        } catch (error) {
+            console.error("Fetch error:", error);
+            loadingElement.style.display = "none";
+            responseElement.innerText = "Error: Unable to get a response.";
+        }
+    }
+    </script>
 </body>
 </html>
