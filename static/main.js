@@ -414,6 +414,9 @@ function typePrompt(text, element, callback) {
 // Modified handleNodeClick function
 function handleNodeClick(event, d) {
     if (stopNodes.has(d.id)) {
+        // Initialize conversation state
+        remainingQuestions = 6;
+        currentService = SERVICE_MAP[d.id];
         const chatUI = document.getElementById('chatUI');
         const queryInput = document.getElementById('query');
         
@@ -568,16 +571,41 @@ window.addEventListener('resize', updateSVG);
 // Modify askGPT to prevent double-submission
 let isProcessing = false;
 
+// Add at the top with other constants
+const SERVICE_MAP = {
+    "card1_2_YES": "Home Energy Score + 4D-ThermoScan analysis",
+    "card1_2_NO": "Home Energy Score assessment",
+    "card2_2": "HERS Audit and Rating",
+    "card3_2_YES": "Manual J/D HVAC analysis",
+    "card3_2_NO": "BPI Energy Audit",
+    "card4_2": "ASHRAE Level II audit"
+};
+
+let remainingQuestions = 6;
+let currentService = "";
+let responseTimeout;
+
+// Add auto-response detection function
+function checkForCompletion(text) {
+    const exitPhrases = ["no", "no more", "that's it", "ok", "done"];
+    return exitPhrases.some(phrase => text.toLowerCase().includes(phrase));
+}
+
 async function askGPT() {
     if (isProcessing) return;
     isProcessing = true;
     
     const queryInput = document.getElementById('query');
-    const context = queryInput.dataset.context;
-    let question = queryInput.value;
+    const userQuestion = queryInput.value.trim();
     
+    // Check for exit phrases
+    if (checkForCompletion(userQuestion)) {
+        promptForBooking();
+        return;
+    }
+
     // Clear context after first use
-    if (context) {
+    if (queryInput.dataset.context) {
         delete queryInput.dataset.context;
     }
     
@@ -592,7 +620,7 @@ async function askGPT() {
     // Append user message
     let userMessage = document.createElement('div');
     userMessage.className = 'message user';
-    userMessage.innerHTML = `<div class="content">${question}</div>`;
+    userMessage.innerHTML = `<div class="content">${userQuestion}</div>`;
     conversation.appendChild(userMessage);
 
     responseElement.innerText = "";
@@ -603,8 +631,9 @@ async function askGPT() {
             method: 'POST',
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-                question: question,
-                context: context // Send the node context
+                question: userQuestion,
+                context: queryInput.dataset.context,
+                remaining: remainingQuestions
             }),
             mode: "cors",
             credentials: "include"
@@ -615,8 +644,11 @@ async function askGPT() {
         }
 
         let data = await response.json();
-        loadingElement.style.display = "none";
-
+        remainingQuestions--;
+        
+        // Append question counter
+        const answerWithCounter = `${data.answer}\n\nLet me know if you have any other questions. I can answer ${Math.max(remainingQuestions, 0)} more questions.`;
+        
         // Append GPT response with typing effect
         let gptMessage = document.createElement('div');
         gptMessage.className = 'message ambience';
@@ -625,8 +657,10 @@ async function askGPT() {
         gptMessage.appendChild(contentDiv);
         conversation.appendChild(gptMessage);
 
-        typeResponse(contentDiv, data.answer);
+        typeResponse(contentDiv, answerWithCounter);
 
+        // Start timeout for auto-prompt
+        responseTimeout = setTimeout(promptForBooking, 10000);
     } catch (error) {
         console.error("Fetch error:", error.message);
         loadingElement.style.display = "none";
@@ -658,5 +692,54 @@ document.getElementById('query').addEventListener('keypress', function(e) {
         }
     }
 });
+
+// Add booking prompt function
+function promptForBooking() {
+    clearTimeout(responseTimeout);
+    if (remainingQuestions <= 0 || !currentService) return;
+
+    const conversation = document.getElementById('conversation');
+    
+    // Add booking prompt
+    const bookingPrompt = document.createElement('div');
+    bookingPrompt.className = 'message ambience';
+    bookingPrompt.innerHTML = `
+        <div class="content">
+            Would you like to book AmbienceHouse's service to conduct the ${currentService}?<br>
+            <button onclick="handleBookingResponse(true)" class="btn btn-success m-2">YES</button>
+            <button onclick="handleBookingResponse(false)" class="btn btn-secondary m-2">NO</button>
+        </div>
+    `;
+    conversation.appendChild(bookingPrompt);
+    remainingQuestions = 0; // Prevent further questions
+}
+
+// Add booking links map at the top
+const BOOKING_LINKS = {
+    "Home Energy Score assessment": "https://calendly.com/ambience-house/home-energy-score-visit",
+    // Add other service links as needed
+    "default": "https://calendly.com/ambience-house/home-energy-score-visit"
+};
+
+// Update handleBookingResponse function
+function handleBookingResponse(confirmed) {
+    const conversation = document.getElementById('conversation');
+    
+    const response = document.createElement('div');
+    response.className = 'message user';
+    response.innerHTML = `<div class="content">${confirmed ? 'YES' : 'NO'}</div>`;
+    conversation.appendChild(response);
+
+    if (confirmed) {
+        // Get appropriate booking link
+        const bookingLink = BOOKING_LINKS[currentService] || BOOKING_LINKS.default;
+        window.location.href = bookingLink;
+    } else {
+        const farewell = document.createElement('div');
+        farewell.className = 'message ambience';
+        farewell.innerHTML = '<div class="content">Thank you for chatting! Feel free to reach out anytime.</div>';
+        conversation.appendChild(farewell);
+    }
+}
 
 
