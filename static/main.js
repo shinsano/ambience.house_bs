@@ -125,13 +125,23 @@ const initialTexts = {
     card3_1: "A full checkup: duct test, combustion test, and a blower door test to measure the airleak.",
     card4_1: "To explore my options for rooftop solar panels.",
     card1_2: "I want to further capture the spots where the energy escapes in some rooms during night.",
-    card1_2_YES: "Let's combine Home Energy Score and 4D-ThermoScan <br>Ask Ambience GPT...",
-    card1_2_NO: "Get the Home Enrgy Score done and see what's next <br>Ask Ambience GPT...",
-    card2_2: "You likely need a HERS Audit and Rating for Title 24 compliance. <br>Ask Ambience GPT...",
+    card1_2_YES: "Why don't I get both of best world, the Home Energy Score and 4D-ThermoScan. Tell me more about them.",
+    card1_2_NO: "As a first step, let's get the Home Enrgy Score done.  Tell me more about it.",
+    card2_2: "I likely need a HERS Audit and Rating for Title 24 compliance. Tell me about it.",
     card3_2: "I think I need to adjust my HVAC load to ensure the comfort for each room.",
-    card3_2_YES: "Consider an HVAC specialist to perform a Manual J/D analysis. <br>Ask Ambience GPT...",
-    card3_2_NO: "We can help! <br>Ask Ambience GPT...",
-    card4_2: "You may benefit from an ASHRAE Level II or III audit. <br>Ask Ambience GPT..."
+    card3_2_YES: "I need an HVAC performance measurement s and rebalancing.  Tell me about Manual J/D analysis.",
+    card3_2_NO: "I want a whole house audit including diagnosis and analysis. Tell me about BPI Energy Audit.",
+    card4_2: "I need to model the energy load to determine the size the solar panel. Tell me about ASHRAE Level II audit."
+};
+
+// Add context mapping at the top
+const nodeContextMap = {
+    "card1_2_YES": "Home Energy Score + 4D-ThermoScan integration expert",
+    "card1_2_NO": "Home Energy Score implementation specialist",
+    "card2_2": "HERS Audit and Title 24 compliance advisor",
+    "card3_2_YES": "Manual J/D HVAC analysis professional",
+    "card3_2_NO": "BPI Energy Audit specialist",
+    "card4_2": "ASHRAE Level II audit consultant"
 };
 
 // Ensure valid data structure
@@ -346,7 +356,8 @@ function update() {
         .attr("width", 220)
         .attr("height", nodeHeight - 20)
         .append("xhtml:div")
-        .attr("class", "description-text")
+        .style("font-size", "14px")
+        .style("font-family", "source-sans-pro")
         .style("width", "200px")
         .style("height", "auto")
         .style("overflow", "hidden")
@@ -377,18 +388,19 @@ function getNodeColor(d) {
     return 'white'; // Default color
 }
 
-// Modify the handleNodeClick function to show chat UI for specific nodes
+// Update handleNodeClick function
 function handleNodeClick(event, d) {
-    // Log the ID of the clicked node
-    console.log(`Node clicked: ${d.id}`);
-
-    // Check if the node is a stop node
     if (stopNodes.has(d.id)) {
-        console.log(`Stop node clicked: ${d.id}`); // Log the stop node click
         const chatUI = document.getElementById('chatUI');
+        const queryInput = document.getElementById('query');
+        
+        // Set the predefined prompt and store context
+        queryInput.value = initialTexts[d.id];
+        queryInput.dataset.context = d.id;
+        
         chatUI.style.display = 'block';
         chatUI.scrollIntoView({ behavior: 'smooth' });
-        return; // Exit the function after handling the stop node
+        return;
     }
 
     // Check if the node has already been clicked
@@ -523,9 +535,16 @@ updateSVG();
 // Optionally, listen for window resize events to reapply scaling
 window.addEventListener('resize', updateSVG);
 
-// Add the askGPT function
+// Update askGPT function
 async function askGPT() {
-    let query = document.getElementById('query').value;
+    const queryInput = document.getElementById('query');
+    const context = queryInput.dataset.context;
+    let question = queryInput.value;
+    
+    // Clear input but keep focus
+    queryInput.value = '';
+    queryInput.focus();
+
     let responseElement = document.getElementById('response');
     let loadingElement = document.getElementById('loading');
     let conversation = document.getElementById('conversation');
@@ -533,7 +552,7 @@ async function askGPT() {
     // Append user message
     let userMessage = document.createElement('div');
     userMessage.className = 'message user';
-    userMessage.innerHTML = `<div class="content">${query}</div>`;
+    userMessage.innerHTML = `<div class="content">${question}</div>`;
     conversation.appendChild(userMessage);
 
     responseElement.innerText = "";
@@ -542,11 +561,11 @@ async function askGPT() {
     try {
         let response = await fetch('https://ambience-gpt.onrender.com/ask', {
             method: 'POST',
-            headers: {
-                "Content-Type": "application/json",
-                "Accept": "application/json",
-            },
-            body: JSON.stringify({ question: query }),
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                question: question,
+                context: context // Send the node context
+            }),
             mode: "cors",
             credentials: "include"
         });
