@@ -393,21 +393,43 @@ function isMobileDevice() {
     return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 }
 
-// Modify handleNodeClick to auto-submit first prompt
+// Add typing animation function
+function typePrompt(text, element, callback) {
+    let index = 0;
+    element.value = ''; // Start with empty input
+    
+    function typeCharacter() {
+        if (index < text.length) {
+            element.value += text.charAt(index);
+            index++;
+            setTimeout(typeCharacter, 40); // Adjust typing speed (ms per character)
+        } else {
+            callback();
+        }
+    }
+    
+    typeCharacter();
+}
+
+// Modified handleNodeClick function
 function handleNodeClick(event, d) {
     if (stopNodes.has(d.id)) {
         const chatUI = document.getElementById('chatUI');
         const queryInput = document.getElementById('query');
         
-        // Set prompt and context
-        queryInput.value = initialTexts[d.id];
+        // Store context and clear previous input
         queryInput.dataset.context = d.id;
+        queryInput.value = '';
         
         chatUI.style.display = 'block';
         chatUI.scrollIntoView({ behavior: 'smooth' });
         
-        // Auto-submit first prompt
-        askGPT();
+        // Start typing animation
+        typePrompt(initialTexts[d.id], queryInput, () => {
+            // Auto-submit after typing completes
+            setTimeout(askGPT, 300); // Brief pause after typing
+        });
+        
         return;
     }
 
@@ -543,8 +565,13 @@ updateSVG();
 // Optionally, listen for window resize events to reapply scaling
 window.addEventListener('resize', updateSVG);
 
-// Update askGPT function
+// Modify askGPT to prevent double-submission
+let isProcessing = false;
+
 async function askGPT() {
+    if (isProcessing) return;
+    isProcessing = true;
+    
     const queryInput = document.getElementById('query');
     const context = queryInput.dataset.context;
     let question = queryInput.value;
@@ -604,6 +631,8 @@ async function askGPT() {
         console.error("Fetch error:", error.message);
         loadingElement.style.display = "none";
         responseElement.innerText = "Error: Unable to get a response.";
+    } finally {
+        isProcessing = false;
     }
 }
 
