@@ -388,18 +388,26 @@ function getNodeColor(d) {
     return 'white'; // Default color
 }
 
-// Update handleNodeClick function
+// Add mobile detection helper
+function isMobileDevice() {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+}
+
+// Modify handleNodeClick to auto-submit first prompt
 function handleNodeClick(event, d) {
     if (stopNodes.has(d.id)) {
         const chatUI = document.getElementById('chatUI');
         const queryInput = document.getElementById('query');
         
-        // Set the predefined prompt and store context
+        // Set prompt and context
         queryInput.value = initialTexts[d.id];
         queryInput.dataset.context = d.id;
         
         chatUI.style.display = 'block';
         chatUI.scrollIntoView({ behavior: 'smooth' });
+        
+        // Auto-submit first prompt
+        askGPT();
         return;
     }
 
@@ -541,6 +549,11 @@ async function askGPT() {
     const context = queryInput.dataset.context;
     let question = queryInput.value;
     
+    // Clear context after first use
+    if (context) {
+        delete queryInput.dataset.context;
+    }
+    
     // Clear input but keep focus
     queryInput.value = '';
     queryInput.focus();
@@ -605,5 +618,16 @@ function typeResponse(element, text, speed = 50) {
     }
     type();
 }
+
+// Add enter key support for desktop
+document.getElementById('query').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        // Prevent form submission on mobile
+        if (!isMobileDevice()) {
+            e.preventDefault();
+            askGPT();
+        }
+    }
+});
 
 
